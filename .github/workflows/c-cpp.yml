@@ -24,7 +24,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: dump-arm32
-        path: build/local/armeabie-v7a/dump
+        path: build/local/armeabi-v7a/dump
     - uses: actions/upload-artifact@v3
       with:
         name: sofix

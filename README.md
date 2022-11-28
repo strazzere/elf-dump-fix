@@ -16,7 +16,7 @@ The build system has been revamped to just use a docker container for all the co
    - ```
      make
      ```
-   - output path is `build/local/{armeabie-v7a|arm64-v8a}/dump`
+   - output path is `build/local/{armeabi-v7a|arm64-v8a}/dump`
    
  - sofix
    - ```
