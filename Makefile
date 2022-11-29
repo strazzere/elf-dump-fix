@@ -23,7 +23,7 @@ local:
 	$(CXX) src/main_fix.cpp src/elffix/fix.cpp -O2 -o $(BUILD_DIR)/sofix
 
 format:
-	find src/ -regex '.*\.\(c\|h\)'  -exec clang-format -style=file -i {} \;
+	find src/ -regex '.*\.\(c\|h\|cpp\)'  -exec clang-format -style=file -i {} \;
 
 .PHONY: clean
 clean:
