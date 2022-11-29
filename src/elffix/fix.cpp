@@ -39,8 +39,7 @@ static void _fix_relative_rebase(char *buffer, size_t bufSize, uint64_t imageBas
         int type = 0;
         if (isElf32) {
 			type = ELF32_R_TYPE(rel->r_info);
-		}
-        else {
+		} else {
         	type = ELF64_R_TYPE(rel->r_info);
         }
         //unsigned sym = (unsigned)ELF32_R_SYM(rel->r_info);
@@ -51,7 +50,11 @@ static void _fix_relative_rebase(char *buffer, size_t bufSize, uint64_t imageBas
             unsigned *offIntBuf = (unsigned*)(buffer+off);
             if (border < (const char*)offIntBuf) {
             	uint64_t tmp = off;
-                printf("relocation off %llx invalid, out of border...\n", tmp);
+#ifdef __aarch64__
+							printf("relocation off %lx invalid, out of border...\n", tmp);
+#else
+							printf("relocation off %llx invalid, out of border...\n", tmp);
+#endif
 				continue;
             }
             unsigned addrNow = *offIntBuf;
@@ -140,7 +143,11 @@ static void _regen_section_header(const Elf_Ehdr_Type *pehdr, const char *buffer
 	}
 	if (maxLoad > len) {
 		//加载的范围大于整个dump下来的so，有问题，先警告
+#ifdef __aarch64__
+		printf("warning load size [%u] is bigger than so size [%zu], dump maybe incomplete!!!\n", maxLoad, len);
+#else
 		printf("warning load size [%u] is bigger than so size [%u], dump maybe incomplete!!!\n", maxLoad, len);
+#endif
 		//TODO:should we fix it???
 	}
 
@@ -352,7 +359,11 @@ static void _regen_section_header(const Elf_Ehdr_Type *pehdr, const char *buffer
 			case DT_INIT: {
 				//找到init段代码，但是无法知道有多长，只好做一个警告，提醒使用者init段存在，脱壳代码可能存在这里
 				uint64_t tmp = dyn[i].d_un.d_ptr;
+#ifdef __aarch64__
+				printf("warning .init exist at 0x%016lx\n", tmp);
+#else
 				printf("warning .init exist at 0x%016llx\n", tmp);
+#endif
 				break;
 			}
 			case DT_TEXTREL:

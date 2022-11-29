@@ -14,10 +14,14 @@ int dumpMemory(int pid, uint64_t begin, uint64_t end, const char *outPath) {
     char bufMemPath[256] = "/proc/self/mem";
 
     if (getuid() != 0) {
-        printf("warning, program run in user:%d, please run this program by root!!!\n", getuid());
+        printf("warning, program running as user: %d, please run this program by root!!!\n", getuid());
     }
 
-    printf("try dump %d from %016llx to %016llx\n", pid, begin, end);
+#ifdef __aarch64__
+    printf("trying to dump %d from %016lx to %016lx\n", pid, begin, end);
+#else
+    printf("trying to dump %d from %016llx to %016llx\n", pid, begin, end);
+#endif
 
     if (pid != 0) {
         sprintf(bufMaps, "/proc/%d/maps", pid);
@@ -44,7 +48,12 @@ int dumpMemory(int pid, uint64_t begin, uint64_t end, const char *outPath) {
     if (r < 0) {
         printf("fseek error return %d\n", (int)r);
     }
-    printf("try to read %s fp:%d, off=%016llx, sz=%d\n", bufMemPath, fMem, begin, sz);
+
+#ifdef __aarch64__
+    printf("trying to read %s fp:%d, off=%016lx, sz=%zu\n", bufMemPath, fMem, begin, sz);
+#else
+    printf("trying to read %s fp:%d, off=%016llx, sz=%d\n", bufMemPath, fMem, begin, sz);
+#endif
     ssize_t szRead = read(fMem, mem, sz);
     if (szRead < 0){
         const char *reason = strerror(errno);
