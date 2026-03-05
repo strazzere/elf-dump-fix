@@ -24,7 +24,6 @@ LOCAL_SRC_FILES += $(LOCAL_PATH)/src/test.cpp
 
 #$(warning "lc $(LOCAL_SRC_FILES)")
 
-LOCAL_CFLAGS := -fvisibility=hidden -Wno-invalid-source-encoding -Wno-return-type-c-linkage
 LOCAL_CFLAGS := -Wno-invalid-source-encoding -Wno-return-type-c-linkage
 LOCAL_CPPFLAGS	+= -frtti -fexceptions
 LOCAL_LDLIBS += -llog
