@@ -7,7 +7,7 @@ build: deps
 	mkdir -p build
 	docker run --rm --mount source=$(PWD),destination=/source,type=bind \
   --workdir=/source ${NDK_IMAGE} ndk-build -e NDK_PROJECT_PATH=. -e \
-	APP_BUILD_SCRIPT=Android.mk NDK_APP_OUT=${BUILD_DIR} \
+	APP_BUILD_SCRIPT=Android.mk NDK_APP_OUT=${BUILD_DIR} NDK_LIBS_OUT=${BUILD_DIR}/libs \
 	APP_PLATFORM=android-21 APP_ABI='armeabi-v7a arm64-v8a' APP_STL=none
 
 deps:
