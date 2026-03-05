@@ -1,0 +1,50 @@
+name: Release Please
+
+on:
+  push:
+    branches: [ "master" ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      upload_url: ${{ steps.release.outputs.upload_url }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: simple
+
+  build-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: make android binaries
+        run: make
+
+      - name: make linux
+        run: make local
+
+      - name: Rename binaries for release
+        run: |
+          cp build/libs/arm64-v8a/dump build/dump-arm64
+          cp build/libs/armeabi-v7a/dump build/dump-arm32
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: |
+            build/dump-arm64
+            build/dump-arm32
+            build/sofix
+          fail_on_missing: true
