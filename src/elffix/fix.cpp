@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "fix.h"
 #include "elf.h"
+#include <inttypes.h>
 
 static const char *g_str = "..dynsym..dynstr..hash..rel.dyn..rel.plt..plt.."
                            "text..ARM.exidx..fini_array..init_array..dynamic.."
@@ -50,11 +51,7 @@ static void _fix_relative_rebase(char *buffer, size_t bufSize,
       unsigned *offIntBuf = (unsigned *)(buffer + off);
       if (border < (const char *)offIntBuf) {
         uint64_t tmp = off;
-#ifdef __aarch64__
-        printf("relocation off %lx invalid, out of border...\n", tmp);
-#else
-        printf("relocation off %llx invalid, out of border...\n", tmp);
-#endif
+        printf("relocation off %" PRIx64 " invalid, out of border...\n", tmp);
         continue;
       }
       unsigned addrNow = *offIntBuf;
@@ -66,7 +63,7 @@ static void _fix_relative_rebase(char *buffer, size_t bufSize,
 
 template <typename Elf_Phdr_Type, typename Elf_Addr_Type>
 uint32_t _get_mem_flag(Elf_Phdr_Type *phdr, size_t phNum, size_t memAddr) {
-  for (int i = 0; i < phNum; i++) {
+  for (size_t i = 0; i < phNum; i++) {
     Elf_Addr_Type begin = phdr[i].p_vaddr;
     Elf_Addr_Type end = begin + phdr[i].p_memsz;
     if (memAddr > begin && memAddr < end) {
@@ -80,7 +77,7 @@ template <typename Elf_Rel_Type, bool isElf32>
 static void _fix_rel_bias(Elf_Rel_Type *relDyn, size_t relCount, size_t bias) {
   const int R_AARCH64_JUMP_SLOT = 1026;
   const int R_AARCH64_RELATIVE = 1027;
-  for (int i = 0; i < relCount; i++) {
+  for (size_t i = 0; i < relCount; i++) {
     unsigned type = 0;
     unsigned sym = 0;
     if (isElf32) {
@@ -102,7 +99,7 @@ static void _fix_rel_bias(Elf_Rel_Type *relDyn, size_t relCount, size_t bias) {
 
 template <typename Elf_Sym_Type>
 static void _fix_dynsym_bias(Elf_Sym_Type *dysym, size_t count, size_t bias) {
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     if (dysym[i].st_value > 0) {
       dysym[i].st_value -= bias;
     }
@@ -144,15 +141,9 @@ static void _regen_section_header(const Elf_Ehdr_Type *pehdr,
   }
   if (maxLoad > len) {
     //加载的范围大于整个dump下来的so，有问题，先警告
-#ifdef __aarch64__
     printf("warning load size [%u] is bigger than so size [%zu], dump maybe "
            "incomplete!!!\n",
            maxLoad, len);
-#else
-    printf("warning load size [%u] is bigger than so size [%u], dump maybe "
-           "incomplete!!!\n",
-           maxLoad, len);
-#endif
     // TODO:should we fix it???
   }
 
@@ -360,11 +351,7 @@ static void _regen_section_header(const Elf_Ehdr_Type *pehdr,
     case DT_INIT: {
       //找到init段代码，但是无法知道有多长，只好做一个警告，提醒使用者init段存在，脱壳代码可能存在这里
       uint64_t tmp = dyn[i].d_un.d_ptr;
-#ifdef __aarch64__
-      printf("warning .init exist at 0x%016lx\n", tmp);
-#else
-      printf("warning .init exist at 0x%016llx\n", tmp);
-#endif
+      printf("warning .init exist at 0x%016" PRIx64 "\n", tmp);
       break;
     }
     case DT_TEXTREL:
@@ -593,7 +580,7 @@ int fix_so(const char *openPath, const char *outPutPath, uint64_t ptrbase) {
     return -1;
   }
 
-  unsigned long result = fread(buffer, 1, flen, fr);
+  size_t result = fread(buffer, 1, flen, fr);
   if (result != flen) {
     printf("Reading %s error\n", openPath);
     fclose(fr);

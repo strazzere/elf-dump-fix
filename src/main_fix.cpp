@@ -31,4 +31,5 @@ int main(int argc, char *argv[]) {
   uint64_t base = strtoull(argv[2], 0, 16);
   const char *outPutPath = argv[3];
   fix_so(openPath, outPutPath, base);
+  return 0;
 }

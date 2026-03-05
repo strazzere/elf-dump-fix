@@ -3,6 +3,7 @@
 //
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,11 +19,8 @@ int dumpMemory(int pid, uint64_t begin, uint64_t end, const char *outPath) {
            getuid());
   }
 
-#ifdef __aarch64__
-  printf("trying to dump %d from %016lx to %016lx\n", pid, begin, end);
-#else
-  printf("trying to dump %d from %016llx to %016llx\n", pid, begin, end);
-#endif
+  printf("trying to dump %d from %016" PRIx64 " to %016" PRIx64 "\n", pid,
+         begin, end);
 
   if (pid != 0) {
     sprintf(bufMaps, "/proc/%d/maps", pid);
@@ -30,8 +28,8 @@ int dumpMemory(int pid, uint64_t begin, uint64_t end, const char *outPath) {
   }
 
   int fMem = open(bufMemPath, O_RDONLY);
-  if (!fMem) {
-    // open mem error, maybe permition deny.
+  if (fMem < 0) {
+    // open mem error, maybe permission denied.
     printf("open %s error, reason %s\n", bufMemPath, strerror(errno));
     return -1;
   }
@@ -49,17 +47,14 @@ int dumpMemory(int pid, uint64_t begin, uint64_t end, const char *outPath) {
     printf("fseek error return %d\n", (int)r);
   }
 
-#ifdef __aarch64__
-  printf("trying to read %s fp:%d, off=%016lx, sz=%zu\n", bufMemPath, fMem,
-         begin, sz);
-#else
-  printf("trying to read %s fp:%d, off=%016llx, sz=%d\n", bufMemPath, fMem,
-         begin, sz);
-#endif
+  printf("trying to read %s fp:%d, off=%016" PRIx64 ", sz=%zu\n", bufMemPath,
+         fMem, begin, sz);
   ssize_t szRead = read(fMem, mem, sz);
   if (szRead < 0) {
     const char *reason = strerror(errno);
     printf("read error return %d lasterr=[%s]", (int)szRead, reason);
+    free(mem);
+    close(fMem);
     return -1;
   }
 
@@ -81,9 +76,12 @@ int dumpMemory(int pid, uint64_t begin, uint64_t end, const char *outPath) {
   int fOut = open(outPath, O_WRONLY | O_CREAT, 0666);
   if (fOut < 0) {
     printf("open %s error:%s\n", outPath, strerror(errno));
+    free(mem);
+    close(fMem);
+    return -3;
   }
   ssize_t szW = write(fOut, mem, sz);
-  printf("%d writed\n", (unsigned)szW);
+  printf("%d written\n", (int)szW);
   close(fOut);
 
   free(mem);
